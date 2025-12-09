@@ -20,7 +20,7 @@ export type Hotel = {
 export type RoomOption = {
   id: string;
   title: string;
-  priceDelta: number; // relative to base
+  priceDelta: number;
   description?: string;
 };
 
@@ -66,5 +66,6 @@ export type TripPackage = {
   insurance?: { type: string; price: number; included: boolean };
   addons: Addon[];
   basePrice: number;
+  currency: string;
   recommendedBecause?: string;
 };

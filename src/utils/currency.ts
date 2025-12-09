@@ -1,7 +1,7 @@
 export const amountFormat = (
   amount: number = 0,
-  currency: string,
-  signDisplay: Intl.NumberFormatOptions["signDisplay"] = "exceptZero",
+  currency: string = "USD",
+  signDisplay: Intl.NumberFormatOptions["signDisplay"] = "never", // or "exceptZero",
   notation: "compact" | "standard" | "scientific" | "engineering" = "standard",
   format: string = "en-EN"
 ) => {
