@@ -17,7 +17,9 @@ describe("usePriceCalculator", () => {
     mockTrip = undefined;
     // Mock useTripStore to work as a selector function
     (useTripStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
-      (selector?: (state: { trip: TripPackage | undefined }) => any) => {
+      (
+        selector?: (state: { trip: TripPackage | undefined }) => TripPackage | undefined
+      ) => {
         const mockState = { trip: mockTrip };
         return selector ? selector(mockState) : mockState;
       }
