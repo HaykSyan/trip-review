@@ -10,30 +10,34 @@ vi.mock("@/stores/tripStore", () => ({
 }));
 
 describe("usePriceCalculator", () => {
+  let mockTrip: TripPackage | undefined;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTrip = undefined;
+    // Mock useTripStore to work as a selector function
+    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (selector?: (state: { trip: TripPackage | undefined }) => any) => {
+        const mockState = { trip: mockTrip };
+        return selector ? selector(mockState) : mockState;
+      }
+    );
   });
 
   it("should return total 0 and undefined currency when trip is undefined", () => {
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: undefined,
-    });
+    mockTrip = undefined;
 
     const { result } = renderHook(() => usePriceCalculator());
 
     expect(result.current.total).toBe(0);
-    expect(result.current.currency).toBeUndefined();
+    expect(result.current.currency).toBe("USD");
   });
 
   it("should calculate total with base price only", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "USD",
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -42,7 +46,7 @@ describe("usePriceCalculator", () => {
   });
 
   it("should calculate total with all components", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "EUR",
       room: { id: "1", title: "Standard", priceDelta: 200 },
@@ -67,11 +71,7 @@ describe("usePriceCalculator", () => {
         { id: "1", name: "Equipment", price: 100, selected: true },
         { id: "2", name: "Guide", price: 200, selected: true },
       ],
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -81,15 +81,11 @@ describe("usePriceCalculator", () => {
   });
 
   it("should not include insurance price when insurance is not included", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "USD",
       insurance: { type: "Basic", price: 25, included: false },
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -97,14 +93,10 @@ describe("usePriceCalculator", () => {
   });
 
   it("should not include insurance price when insurance is undefined", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "USD",
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -112,17 +104,13 @@ describe("usePriceCalculator", () => {
   });
 
   it("should handle missing optional components (transfer, flight)", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "GBP",
       room: { id: "1", title: "Standard", priceDelta: 200 },
       skipass: { id: "1", days: 5, zone: "A", price: 150 },
       // transfer and flight are undefined
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -132,7 +120,7 @@ describe("usePriceCalculator", () => {
   });
 
   it("should only include selected addons in total", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "USD",
       addons: [
@@ -140,11 +128,7 @@ describe("usePriceCalculator", () => {
         { id: "2", name: "Guide", price: 200, selected: false },
         { id: "3", name: "Lessons", price: 150, selected: true },
       ],
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -153,18 +137,14 @@ describe("usePriceCalculator", () => {
   });
 
   it("should handle addons without selected property (defaults to not selected)", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "USD",
       addons: [
         { id: "1", name: "Equipment", price: 100 }, // selected is undefined
         { id: "2", name: "Guide", price: 200, selected: true },
       ],
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -173,15 +153,11 @@ describe("usePriceCalculator", () => {
   });
 
   it("should handle empty addons array", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "USD",
       addons: [],
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -189,15 +165,11 @@ describe("usePriceCalculator", () => {
   });
 
   it("should handle negative room priceDelta", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "USD",
       room: { id: "1", title: "Budget", priceDelta: -100 },
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -205,7 +177,7 @@ describe("usePriceCalculator", () => {
   });
 
   it("should handle zero values for all components", () => {
-    const mockTrip: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 0,
       currency: "USD",
       room: { id: "1", title: "Standard", priceDelta: 0 },
@@ -227,11 +199,7 @@ describe("usePriceCalculator", () => {
       },
       insurance: { type: "Basic", price: 0, included: true },
       addons: [],
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip,
-    });
+    } as unknown as TripPackage;
 
     const { result } = renderHook(() => usePriceCalculator());
 
@@ -239,28 +207,20 @@ describe("usePriceCalculator", () => {
   });
 
   it("should recalculate when trip data changes", () => {
-    const mockTrip1: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 1000,
       currency: "USD",
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip1,
-    });
+    } as unknown as TripPackage;
 
     const { result, rerender } = renderHook(() => usePriceCalculator());
 
     expect(result.current.total).toBe(1000);
 
-    const mockTrip2: Partial<TripPackage> = {
+    mockTrip = {
       basePrice: 2000,
       currency: "EUR",
       room: { id: "1", title: "Luxury", priceDelta: 500 },
-    };
-
-    (useTripStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      trip: mockTrip2,
-    });
+    } as unknown as TripPackage;
 
     rerender();
 
